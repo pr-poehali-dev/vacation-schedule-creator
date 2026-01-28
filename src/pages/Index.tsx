@@ -5,10 +5,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('year');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reason, setReason] = useState('');
 
   const statsCards = [
     {
@@ -109,14 +120,127 @@ const Index = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="lg" className="gap-2 hover:scale-105 transition-transform">
-              <Icon name="Download" size={18} />
-              Экспорт
-            </Button>
-            <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-transform">
-              <Icon name="Plus" size={18} />
-              Запланировать отпуск
-            </Button>
+            <Select defaultValue="export">
+              <SelectTrigger className="w-[140px] h-11">
+                <Icon name="Download" size={18} className="mr-2" />
+                <SelectValue placeholder="Экспорт" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem 
+                  value="excel"
+                  onClick={() => {
+                    toast({
+                      title: 'Экспорт в Excel',
+                      description: 'Файл vacation_report.xlsx загружается...'
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="FileSpreadsheet" size={16} />
+                    Excel
+                  </div>
+                </SelectItem>
+                <SelectItem 
+                  value="pdf"
+                  onClick={() => {
+                    toast({
+                      title: 'Экспорт в PDF',
+                      description: 'Файл vacation_report.pdf загружается...'
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="FileText" size={16} />
+                    PDF
+                  </div>
+                </SelectItem>
+                <SelectItem 
+                  value="csv"
+                  onClick={() => {
+                    toast({
+                      title: 'Экспорт в CSV',
+                      description: 'Файл vacation_report.csv загружается...'
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="Download" size={16} />
+                    CSV
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-transform">
+                  <Icon name="Plus" size={18} />
+                  Запланировать отпуск
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Новая заявка на отпуск</DialogTitle>
+                  <DialogDescription>
+                    Заполните форму для создания заявки. Она будет отправлена на согласование.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="start-date">Дата начала</Label>
+                    <Input 
+                      id="start-date" 
+                      type="date" 
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="end-date">Дата окончания</Label>
+                    <Input 
+                      id="end-date" 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="reason">Причина (необязательно)</Label>
+                    <Input 
+                      id="reason" 
+                      placeholder="Семейный отпуск, путешествие..."
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Отмена</Button>
+                  <Button 
+                    className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    onClick={() => {
+                      if (!startDate || !endDate) {
+                        toast({
+                          title: 'Ошибка',
+                          description: 'Укажите даты начала и окончания отпуска',
+                          variant: 'destructive'
+                        });
+                        return;
+                      }
+                      toast({
+                        title: 'Заявка создана!',
+                        description: 'Ваша заявка отправлена на согласование',
+                      });
+                      setIsDialogOpen(false);
+                      setStartDate('');
+                      setEndDate('');
+                      setReason('');
+                    }}
+                  >
+                    Отправить заявку
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </header>
 
@@ -166,6 +290,61 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
+            <Card className="p-4 border-0 bg-white/60 backdrop-blur-sm mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="flex items-center gap-2 flex-1">
+                  <Icon name="Filter" size={18} className="text-muted-foreground" />
+                  <span className="text-sm font-medium">Фильтры:</span>
+                </div>
+                <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Отдел" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все отделы</SelectItem>
+                      <SelectItem value="development">Разработка</SelectItem>
+                      <SelectItem value="marketing">Маркетинг</SelectItem>
+                      <SelectItem value="sales">Продажи</SelectItem>
+                      <SelectItem value="hr">HR</SelectItem>
+                      <SelectItem value="support">Поддержка</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Период" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="year">Весь год</SelectItem>
+                      <SelectItem value="month">Текущий месяц</SelectItem>
+                      <SelectItem value="quarter">Квартал</SelectItem>
+                      <SelectItem value="week">Неделя</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {(selectedDepartment !== 'all' || selectedPeriod !== 'year') && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedDepartment('all');
+                        setSelectedPeriod('year');
+                        toast({
+                          title: 'Фильтры сброшены',
+                          description: 'Показаны все данные'
+                        });
+                      }}
+                      className="gap-2"
+                    >
+                      <Icon name="X" size={16} />
+                      Сбросить
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="p-6 border-0 bg-white/80 backdrop-blur-sm shadow-lg">
                 <div className="flex items-center justify-between mb-6">
