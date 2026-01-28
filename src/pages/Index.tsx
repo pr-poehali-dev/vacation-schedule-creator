@@ -21,6 +21,35 @@ const Index = () => {
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
 
+  const vacationDates = [
+    { date: new Date(2026, 0, 15), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 16), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 17), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 18), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 19), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 20), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 21), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 0, 22), employee: 'Анна Смирнова', status: 'approved', color: 'purple' },
+    { date: new Date(2026, 1, 1), employee: 'Иван Петров', status: 'in-progress', color: 'pink' },
+    { date: new Date(2026, 1, 2), employee: 'Иван Петров', status: 'in-progress', color: 'pink' },
+    { date: new Date(2026, 1, 3), employee: 'Иван Петров', status: 'in-progress', color: 'pink' },
+    { date: new Date(2026, 1, 4), employee: 'Иван Петров', status: 'in-progress', color: 'pink' },
+    { date: new Date(2026, 1, 5), employee: 'Иван Петров', status: 'in-progress', color: 'pink' },
+    { date: new Date(2026, 1, 20), employee: 'Мария Козлова', status: 'pending', color: 'blue' },
+    { date: new Date(2026, 1, 21), employee: 'Мария Козлова', status: 'pending', color: 'blue' },
+    { date: new Date(2026, 1, 22), employee: 'Мария Козлова', status: 'pending', color: 'blue' },
+    { date: new Date(2026, 1, 23), employee: 'Мария Козлова', status: 'pending', color: 'blue' },
+    { date: new Date(2026, 1, 24), employee: 'Мария Козлова', status: 'pending', color: 'blue' },
+  ];
+
+  const getDayVacations = (day: Date) => {
+    return vacationDates.filter(vd => 
+      vd.date.getDate() === day.getDate() && 
+      vd.date.getMonth() === day.getMonth() &&
+      vd.date.getFullYear() === day.getFullYear()
+    );
+  };
+
   const statsCards = [
     {
       title: 'Использовано дней',
@@ -408,18 +437,59 @@ const Index = () => {
             <Card className="p-6 border-0 bg-white/80 backdrop-blur-sm shadow-lg">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-xl border-0"
-                  />
+                  <div className="relative">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      className="rounded-xl border-0"
+                      modifiers={{
+                        vacation: vacationDates.map(v => v.date)
+                      }}
+                      modifiersStyles={{
+                        vacation: {
+                          fontWeight: 'bold'
+                        }
+                      }}
+                      components={{
+                        Day: ({ date: dayDate, ...props }) => {
+                          const dayVacations = getDayVacations(dayDate);
+                          const hasVacations = dayVacations.length > 0;
+                          
+                          return (
+                            <div className="relative">
+                              <button {...props as any} className={`
+                                relative h-9 w-9 p-0 font-normal 
+                                ${hasVacations ? 'font-bold' : ''}
+                              `}>
+                                <span className="relative z-10">{dayDate.getDate()}</span>
+                                {hasVacations && (
+                                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+                                    {dayVacations.slice(0, 3).map((vac, idx) => (
+                                      <div 
+                                        key={idx}
+                                        className={`w-1 h-1 rounded-full ${
+                                          vac.color === 'purple' ? 'bg-purple-500' :
+                                          vac.color === 'pink' ? 'bg-pink-500' :
+                                          'bg-blue-500'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        }
+                      }}
+                    />
+                  </div>
                   <div className="mt-6 space-y-3">
                     <h4 className="font-semibold text-lg">Легенда</h4>
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-purple-500"></div>
-                        <span className="text-sm">Запланировано</span>
+                        <span className="text-sm">Одобрено</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-pink-500"></div>
@@ -427,27 +497,84 @@ const Index = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded bg-blue-500"></div>
-                        <span className="text-sm">Завершено</span>
+                        <span className="text-sm">На согласовании</span>
                       </div>
+                    </div>
+                    <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon name="Users" size={16} className="text-purple-600" />
+                        <p className="text-sm font-semibold">Загруженность команды</p>
+                      </div>
+                      <div className="flex items-center gap-3 mt-3">
+                        <div className="flex-1">
+                          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: '35%' }}></div>
+                          </div>
+                        </div>
+                        <span className="text-sm font-medium">35%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">8 из 24 сотрудников в отпуске</p>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">События на {date?.toLocaleDateString('ru-RU')}</h4>
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                        <p className="font-medium text-sm">Анна Смирнова</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Отпуск 15-22 февраля</p>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-lg">События</h4>
+                    <Badge variant="secondary" className="text-xs">
+                      {date?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                    </Badge>
+                  </div>
+                  
+                  {date && getDayVacations(date).length > 0 ? (
+                    <div className="space-y-3">
+                      {getDayVacations(date).map((vac, idx) => (
+                        <div 
+                          key={idx}
+                          className={`p-4 rounded-lg transition-all hover:scale-105 ${
+                            vac.color === 'purple' ? 'bg-gradient-to-r from-purple-50 to-purple-100' :
+                            vac.color === 'pink' ? 'bg-gradient-to-r from-pink-50 to-pink-100' :
+                            'bg-gradient-to-r from-blue-50 to-blue-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              vac.color === 'purple' ? 'bg-purple-500' :
+                              vac.color === 'pink' ? 'bg-pink-500' :
+                              'bg-blue-500'
+                            }`}></div>
+                            <p className="font-medium text-sm">{vac.employee}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {vac.status === 'approved' ? 'Одобрено' : 
+                             vac.status === 'in-progress' ? 'В отпуске' : 'На согласовании'}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <p className="font-medium text-sm">Иван Петров</p>
+                  ) : (
+                    <div className="p-8 text-center border-2 border-dashed rounded-lg">
+                      <Icon name="CalendarOff" size={32} className="mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Нет событий на эту дату</p>
+                    </div>
+                  )}
+
+                  <div className="mt-6 space-y-3">
+                    <h5 className="text-sm font-semibold text-muted-foreground uppercase">Ближайшие</h5>
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-white border border-purple-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium">Анна Смирнова</p>
+                          <Badge variant="outline" className="text-xs">15-22 фев</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Маркетинг • 8 дней</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">Отпуск 1-14 марта</p>
+                      <div className="p-3 rounded-lg bg-white border border-pink-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium">Иван Петров</p>
+                          <Badge variant="outline" className="text-xs">1-14 мар</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Разработка • 14 дней</p>
+                      </div>
                     </div>
                   </div>
                 </div>
